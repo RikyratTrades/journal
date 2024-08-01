@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Journal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        h1 {
+            text-align: center;
+            padding: 10px;
+            font-size: 24px;
+            color: #4b0082;
+        }
+        
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            margin: 10px;
+        }
+        
+        .tab-content {
+            flex: 1;
+            display: none;
+            padding: 20px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        
+        .card.red {
+            background-color: #ffdddd;
+        }
+        
+        .card.green {
+            background-color: #ddffdd;
+        }
+        
+        .card .info {
+            display: flex;
+            flex-direction: column;
+        }
+        .card p.pnl {
+    font-size: 18px; /* Adjust size as needed */
+    color: #006400; /* Dark green for profit */
+}.card p.pnl.loss {
+    color: #8b0000; /* Dark red for loss */
+}.card p.risk {
+    color: #ff0000; /* Red for risk */
+    font-weight: bold; /* Optional: Makes the risk text stand out more */
+}
+        
+        .card h3, .card p {
+            margin: 5px 0;
+        }
+        
+        .card .delete-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ff4b5c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .button {
+            background-color: #4b0082;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .button:hover {
+            background-color: #3a0066;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            -webkit-appearance: none;
+            -moz-appearance: textfield;
+            appearance: none;
+        }
+        
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        
+        input:focus, select:focus {
+            border-color: #4b0082;
+            box-shadow: 0 0 5px rgba(75, 0, 130, 0.2);
+        }
+        
+        .toggle-button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 150px;
+            padding: 10px;
+            margin: 20px 0;
+            background-color: #eee;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 auto;
+        }
+        
+        .toggle-button div {
+            padding: 5px;
+            border-radius: 5px;
+            flex: 1;
+            text-align: center;
+            cursor: pointer;
+        }
+        
+        .toggle-button .active-loss {
+            background-color: #ff4b5c;
+            color: white;
+        }
+        
+        .toggle-button .active-profit {
+            background-color: #4caf50;
+            color: white;
+        }
+        
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            background-color: white;
+            padding: 10px 0;
+            border-top: 2px solid #4b0082;
+        }
+        
+        .bottom-nav button {
+            background: none;
+            border: none;
+            color: #4b0082;
+            font-size: 18px;
+            cursor: pointer;
+            width: 50%;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .bottom-nav button.active {
+            background-color: #4b0082;
+            color: white;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4caf50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            display: none;
+            z-index: 1000;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .journal-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 10px;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .sorting {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .sorting select {
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Trading Journal</h1>
+
+    <div class="container">
+        <div id="addTrade" class="tab-content active">
+            <h2 style="text-align: center;">Add New Entry</h2>
+            <form id="journalForm">
+                <div class="toggle-button" id="profitLossToggle">
+                    <div id="loss" class="active-loss">Loss</div>
+                    <div id="profit">Profit</div>
+                </div>
+                <input type="date" id="date" required>
+                <input type="time" id="time" required>
+                <input type="text" id="pair" placeholder="Pair" required>
+                <input type="number" id="accountBalance" placeholder="Account Balance" step="0.01" required>
+                <input type="number" id="riskPercent" placeholder="Risk per Trade (%)" step="0.001" required>
+                <input type="number" id="riskUSD" placeholder="Risk on Trade (USD)" step="0.01" required>
+                <input type="number" id="pnl" placeholder="PNL" step="0.01" required>
+                <label>Partials?</label>
+                <select id="partials" required>
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                </select>
+                <div id="partialsInputs" class="hidden">
+                    <input type="number" id="partial1USD" placeholder="Partial 1 (USD)" step="0.01">
+                    <input type="number" id="partial2USD" placeholder="Partial 2 (USD)" step="0.01">
+                    <input type="number" id="partial3USD" placeholder="Partial 3 (USD)" step="0.01">
+                </div>
+                <input type="text" id="strategy" placeholder="Strategy" required>
+                <input type="text" id="improvement" placeholder="Improvement (Optional)">
+                <button type="submit" class="button">Add Entry</button>
+            </form>
+        </div>
+
+        <div id="viewTrades" class="tab-content">
+            <h2 class="journal-header">Trade Journal</h2>
+            <div class="sorting">
+                <select id="sortOptions">
+                    <option value="mostProfit">Most Profit</option>
+                    <option value="mostLoss">Most Loss</option>
+                    <option value="mostPnl">Most PNL</option>
+                    <option value="leastPnl">LeastPNL</option>
+                    <option value="mostRisked">Most Risked</option>
+                    <option value="leastRisked">Least Risked</option>
+                    <option value="earliestDate">Earliest By Date</option>
+                    <option value="latestDate">Latest By Date</option>
+                    <option value="highestRiskReward">Highest Risk to Reward</option>
+                    <option value="lowestRiskReward">Lowest Risk to Reward</option>
+                </select>
+            </div>
+            <div id="tradesContainer"></div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button id="addTab" class="active">Add</button>
+        <button id="journalTab">Trade Journal</button>
+    </div>
+
+    <div id="toast" class="toast">Trade added successfully!</div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Initial Setup</h2>
+            <input type="number" id="initialBalance" placeholder="Starting Balance" step="0.01" required>
+            <button id="saveInitialBalance" class="button">Save</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const addTab = document.getElementById('addTab');
+            const journalTab = document.getElementById('journalTab');
+            const addTrade = document.getElementById('addTrade');
+            const viewTrades = document.getElementById('viewTrades');
+            const profitLossToggle = document.getElementById('profitLossToggle');
+            const lossDiv = document.getElementById('loss');
+            const profitDiv = document.getElementById('profit');
+            const journalForm = document.getElementById('journalForm');
+            const partials = document.getElementById('partials');
+            const partialsInputs = document.getElementById('partialsInputs');
+            const tradesContainer = document.getElementById('tradesContainer');
+            const toast = document.getElementById('toast');
+            const modal = document.getElementById('modal');
+            const closeModal = document.querySelector('.close');
+            const saveInitialBalance = document.getElementById('saveInitialBalance');
+            const initialBalance = document.getElementById('initialBalance');
+            const accountBalance = document.getElementById('accountBalance');
+            const riskPercent = document.getElementById('riskPercent');
+            const riskUSD = document.getElementById('riskUSD');
+            const sortOptions = document.getElementById('sortOptions');
+
+            let isProfit = false;
+            let trades = JSON.parse(localStorage.getItem('trades')) || [];
+            let initialSetupDone = localStorage.getItem('initialSetupDone') || false;
+
+            if (!initialSetupDone) {
+                modal.style.display = 'block';
+            }
+
+            const updateLocalStorage = () => {
+                localStorage.setItem('trades', JSON.stringify(trades));
+            };
+
+            const showModal = () => {
+                modal.style.display = 'block';
+            };
+
+            const hideModal = () => {
+                modal.style.display = 'none';
+            };
+
+            const showToast = (message) => {
+                toast.textContent = message;
+                toast.style.display = 'block';
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 3000);
+            };
+
+         const addTradeToDOM = (trade) => {
+    const card = document.createElement('div');
+    card.classList.add('card');
+    card.classList.add(trade.isProfit ? 'green' : 'red');
+
+    const deleteButton = document.createElement('button');
+    deleteButton.classList.add('delete-button');
+    deleteButton.textContent = 'Delete';
+    deleteButton.addEventListener('click', () => {
+        if (confirm('Are you sure you want to delete this trade?')) {
+            trades = trades.filter(t => t.id !== trade.id);
+            updateLocalStorage();
+            renderTrades();
+        }
+    });
+
+    const info = document.createElement('div');
+    info.classList.add('info');
+    info.innerHTML = `
+        <h3>${trade.pair} | ${trade.strategy}</h3>
+        <p class="pnl ${trade.isProfit ? '' : 'loss'}">PNL: ${trade.pnl}</p>
+        <p class="risk">Risk: ${trade.riskUSD}</p>
+        <p>Risk to Reward: ${trade.riskToReward}</p>
+        <p>Date and Time: ${new Date(trade.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })} ${new Date(trade.date).toLocaleTimeString()}</p>
+        <p>Balance: ${trade.balanceBefore} -> ${trade.balanceAfter}</p>
+        <p>Improvement: ${trade.improvement}</p>
+    `;
+
+    card.appendChild(deleteButton);
+    card.appendChild(info);
+    tradesContainer.appendChild(card);
+};
+
+
+            const renderTrades = () => {
+                tradesContainer.innerHTML = '';
+                trades.forEach(addTradeToDOM);
+            };
+
+            const autoFillDateAndTime = () => {
+                const now = new Date();
+                const date = now.toISOString().split('T')[0];
+                const time = now.toTimeString().split(' ')[0].slice(0, 5);
+                document.getElementById('date').value = date;
+                document.getElementById('time').value = time;
+            };
+
+            const autoFillBalance = () => {
+                const lastTrade = trades[trades.length - 1];
+                accountBalance.value = lastTrade ? lastTrade.balanceAfter : initialBalance.value;
+            };
+
+            const calculateRiskUSD = () => {
+                const balance = parseFloat(accountBalance.value);
+                const percentage = parseFloat(riskPercent.value);
+                if (!isNaN(balance) && !isNaN(percentage)) {
+                    riskUSD.value = ((balance * percentage) / 100).toFixed(2);
+                }
+            };
+
+            const calculateRiskPercent = () => {
+                const balance = parseFloat(accountBalance.value);
+                const usd = parseFloat(riskUSD.value);
+                if (!isNaN(balance) && !isNaN(usd)) {
+                    riskPercent.value = ((usd / balance) * 100).toFixed(3);
+                }
+            };
+
+            const addTradeHandler = (e) => {
+                e.preventDefault();
+
+                const trade = {
+                    id: Date.now(),
+                    date: `${document.getElementById('date').value}T${document.getElementById('time').value}`,
+                    pair: document.getElementById('pair').value,
+                    strategy: document.getElementById('strategy').value,
+                    accountBalance: parseFloat(accountBalance.value),
+                    riskPercent: parseFloat(riskPercent.value),
+                    riskUSD: parseFloat(riskUSD.value),
+                    pnl: parseFloat(document.getElementById('pnl').value),
+                    partials: partials.value,
+                    isProfit,
+                    improvement: document.getElementById('improvement').value || 'None',
+                };
+
+                const lastTrade = trades[trades.length - 1];
+                trade.balanceBefore = lastTrade ? lastTrade.balanceAfter : parseFloat(initialBalance.value);
+                trade.balanceAfter = isProfit ? trade.balanceBefore + trade.pnl : trade.balanceBefore - trade.pnl;
+
+                trade.riskToReward = (trade.pnl / trade.riskUSD).toFixed(2);
+
+                trades.push(trade);
+                updateLocalStorage();
+                addTradeToDOM(trade);
+                showToast('Trade added successfully!');
+                journalForm.reset();
+                autoFillDateAndTime();
+                autoFillBalance();
+            };
+
+            const saveInitialBalanceHandler = () => {
+                localStorage.setItem('initialSetupDone', true);
+                localStorage.setItem('initialBalance', initialBalance.value);
+                initialSetupDone = true;
+                hideModal();
+                autoFillBalance();
+            };
+
+            addTab.addEventListener('click', () => {
+                addTrade.classList.add('active');
+                viewTrades.classList.remove('active');
+                addTab.classList.add('active');
+                journalTab.classList.remove('active');
+            });
+
+            journalTab.addEventListener('click', () => {
+                addTrade.classList.remove('active');
+                viewTrades.classList.add('active');
+                addTab.classList.remove('active');
+                journalTab.classList.add('active');
+                renderTrades();
+            });
+
+            profitLossToggle.addEventListener('click', (e) => {
+                if (e.target.id === 'profit') {
+                    profitDiv.classList.add('active-profit');
+                    lossDiv.classList.remove('active-loss');
+                    isProfit = true;
+                } else if (e.target.id === 'loss') {
+                    lossDiv.classList.add('active-loss');
+                    profitDiv.classList.remove('active-profit');
+                    isProfit = false;
+                }
+            });
+
+            const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const options = { day: 'numeric', month: 'long', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true };
+    return date.toLocaleString('en-US', options);
+};
+
+
+            partials.addEventListener('change', (e) => {
+                if (e.target.value === 'yes') {
+                    partialsInputs.classList.remove('hidden');
+                } else {
+                    partialsInputs.classList.add('hidden');
+                }
+            });
+
+            journalForm.addEventListener('submit', addTradeHandler);
+            closeModal.addEventListener('click', hideModal);
+            saveInitialBalance.addEventListener('click', saveInitialBalanceHandler);
+            riskPercent.addEventListener('input', calculateRiskUSD);
+            riskUSD.addEventListener('input', calculateRiskPercent);
+            sortOptions.addEventListener('change', (e) => {
+                const sortValue = e.target.value;
+                switch (sortValue) {
+                    case 'mostProfit':
+                        trades.sort((a, b) => b.pnl - a.pnl);
+                        break;
+                    case 'mostLoss':
+                        trades.sort((a, b) => a.pnl - b.pnl);
+                        break;
+                
+                    case 'mostRisked':
+                        trades.sort((a, b) => b.riskUSD - a.riskUSD);
+                        break;
+                    case 'leastRisked':
+                        trades.sort((a, b) => a.riskUSD - b.riskUSD);
+                        break;
+                    case 'earliestDate':1
+                        trades.sort((a, b) => new Date(a.date) - new Date(b.date));
+                        break;
+                    case 'latestDate':
+                        trades.sort((a, b) => new Date(b.date) - new Date(a.date));
+                        break;
+                    case 'highestRiskReward':
+                        trades.sort((a, b) => b.riskToReward - a.riskToReward);
+                        break;
+                    case 'lowestRiskReward':
+                        trades.sort((a, b) => a.riskToReward - b.riskToReward);
+                        break;
+                }
+                renderTrades();
+            });
+
+            autoFillDateAndTime();
+            autoFillBalance();
+            renderTrades();
+        });
+    </script>
+</body>
+</html>
+
